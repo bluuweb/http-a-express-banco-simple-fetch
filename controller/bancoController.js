@@ -2,7 +2,7 @@ const pool = require("../db");
 
 module.exports.guardarUsuario = async (req, res) => {
     const { nombre, balance } = req.body;
-    // console.log(nombre, balance);
+    console.log(nombre, balance);
 
     if (!nombre || !balance) {
         return res.status(400).json({
@@ -53,6 +53,41 @@ module.exports.leerUsuarios = async (req, res) => {
         res.status(200).json({
             ok: true,
             data: respuesta,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok: false,
+            data: "Algo falló con DB",
+        });
+    } finally {
+        client.release();
+    }
+};
+
+module.exports.leerUsuario = async (req, res) => {
+    console.log(req.params.id);
+    const id = req.params.id;
+
+    const client = await pool.connect();
+    const query = {
+        text: "SELECT * FROM usuarios WHERE id = $1",
+        values: [id],
+    };
+
+    try {
+        const respuesta = (await client.query(query)).rows;
+
+        if (respuesta.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                data: "No se encontró el usuario",
+            });
+        }
+
+        res.status(200).json({
+            ok: true,
+            data: respuesta[0],
         });
     } catch (error) {
         console.log(error);
